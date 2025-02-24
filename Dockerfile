@@ -17,8 +17,7 @@ ARG APP_VERSION
 LABEL app_version=$APP_VERSION
 LABEL app_tag=$TAG
 
-WORKDIR /apps/${APP_NAME}
-COPY ./apps/${APP_NAME}/robex .
+ADD ./apps/${APP_NAME}/robex.tar.gz /apps/
 
 ENV APP_SPECIAL="terminal"
 ENV APP_CMD_PREFIX="export PATH=/apps/${APP_NAME}:${PATH}"
@@ -31,6 +30,7 @@ HEALTHCHECK --interval=10s --timeout=10s --retries=5 --start-period=30s \
   CMD sh -c "/apps/${APP_NAME}/scripts/process-healthcheck.sh \
   && /apps/${APP_NAME}/scripts/ls-healthcheck.sh /home/${HIP_USER}/nextcloud/"
 
+WORKDIR /apps/${APP_NAME}/
 COPY ./scripts/ scripts/
 
 ENTRYPOINT ["./scripts/docker-entrypoint.sh"]
