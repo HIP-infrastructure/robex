@@ -1,4 +1,4 @@
-# HIP-ROBEX
+# ROBEX
 This integrates the Robust Brain Extraction (ROBEX [https://www.nitrc.org/projects/robex]) software into HIP/PHI.
 
 ## Acknowledgement
