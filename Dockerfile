@@ -1,13 +1,15 @@
 ARG CI_REGISTRY_IMAGE
 ARG TAG
+ARG APP_NAME
 ARG DOCKERFS_TYPE
 ARG DOCKERFS_VERSION
-ARG JUPYTERLAB_DESKTOP_VERSION
-FROM ${CI_REGISTRY_IMAGE}/<base-image:version>${TAG}
-LABEL maintainer="<maintainer@example.com>"
+FROM ${CI_REGISTRY_IMAGE}/${DOCKERFS_TYPE}:${DOCKERFS_VERSION}${TAG}
+LABEL maintainer="paoloemilio.mazzon@unipd.it"
+
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG CARD
+ARG TAG
 ARG CI_REGISTRY
 ARG APP_NAME
 ARG APP_VERSION
@@ -16,21 +18,14 @@ LABEL app_version=$APP_VERSION
 LABEL app_tag=$TAG
 
 WORKDIR /apps/${APP_NAME}
+COPY ./apps/${APP_NAME}/robex .
 
-RUN apt-get update && \
-    apt-get upgrade -y && \
-    apt-get install --no-install-recommends -y \ 
-    curl -sS <app> && \
-    apt-get remove -y --purge curl && \
-    apt-get autoremove -y --purge && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-ENV APP_SPECIAL="<option>"
-ENV APP_CMD="</path/to/app/executable>"
-ENV PROCESS_NAME="<app_process_name>"
-ENV APP_DATA_DIR_ARRAY="<app_config_dir .app_config_dir>"
-ENV DATA_DIR_ARRAY="<app_data_dir1 app_data_dir2>"
+ENV APP_SPECIAL="terminal"
+ENV APP_CMD_PREFIX="export PATH=/apps/${APP_NAME}:${PATH}"
+ENV APP_CMD=""
+ENV PROCESS_NAME="ROBEX"
+ENV APP_DATA_DIR_ARRAY=""
+ENV DATA_DIR_ARRAY=""
 
 HEALTHCHECK --interval=10s --timeout=10s --retries=5 --start-period=30s \
   CMD sh -c "/apps/${APP_NAME}/scripts/process-healthcheck.sh \
