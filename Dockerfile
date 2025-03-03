@@ -1,13 +1,15 @@
 ARG CI_REGISTRY_IMAGE
 ARG TAG
+ARG APP_NAME
 ARG DOCKERFS_TYPE
 ARG DOCKERFS_VERSION
-ARG JUPYTERLAB_DESKTOP_VERSION
-FROM ${CI_REGISTRY_IMAGE}/<base-image:version>${TAG}
-LABEL maintainer="<maintainer@example.com>"
+FROM ${CI_REGISTRY_IMAGE}/${DOCKERFS_TYPE}:${DOCKERFS_VERSION}${TAG}
+LABEL maintainer="paoloemilio.mazzon@unipd.it"
+
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG CARD
+ARG TAG
 ARG CI_REGISTRY
 ARG APP_NAME
 ARG APP_VERSION
@@ -15,22 +17,34 @@ ARG APP_VERSION
 LABEL app_version=$APP_VERSION
 LABEL app_tag=$TAG
 
-WORKDIR /apps/${APP_NAME}
+WORKDIR /apps/${APP_NAME}/
 
-RUN apt-get update && \
-    apt-get upgrade -y && \
-    apt-get install --no-install-recommends -y \ 
-    curl -sS <app> && \
-    apt-get remove -y --purge curl && \
-    apt-get autoremove -y --purge && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    --mount=type=cache,target=/var/cache/curl,sharing=locked \
+    apt-get update -q && \
+    apt-get install --no-install-recommends -qy \
+    unzip \
+    ca-certificates \
+    curl && \
+    curl -sSL 'https://www.nitrc.org/frs/download.php/5994/ROBEXv12.linux64.tar.gz/?i_agree=1&download_now=1' -o ${APP_NAME}${APP_VERSION}.tar.gz && \
+    tar -zxf ${APP_NAME}${APP_VERSION}.tar.gz && \
+    rm -f ${APP_NAME}${APP_VERSION}.tar.gz && \
+    mv ROBEX ${APP_NAME} && \
+    chown -R 0:0 ${APP_NAME} && \
+    chmod 755 /apps/${APP_NAME}/${APP_NAME} && \
+    chmod -R go-w /apps/${APP_NAME}/${APP_NAME} && \
+    chmod 644 /apps/${APP_NAME}/${APP_NAME}/dat/* /apps/${APP_NAME}/${APP_NAME}/ref_vols/* && \
+    apt-get remove -y --purge \
+    curl && \
+    apt-get autoremove -y --purge
 
-ENV APP_SPECIAL="<option>"
-ENV APP_CMD="</path/to/app/executable>"
-ENV PROCESS_NAME="<app_process_name>"
-ENV APP_DATA_DIR_ARRAY="<app_config_dir .app_config_dir>"
-ENV DATA_DIR_ARRAY="<app_data_dir1 app_data_dir2>"
+ENV APP_SPECIAL="terminal"
+ENV APP_CMD_PREFIX="export PATH=/apps/${APP_NAME}/${APP_NAME}:${PATH}"
+ENV APP_CMD=""
+ENV PROCESS_NAME="ROBEX"
+ENV APP_DATA_DIR_ARRAY=""
+ENV DATA_DIR_ARRAY=""
 
 HEALTHCHECK --interval=10s --timeout=10s --retries=5 --start-period=30s \
   CMD sh -c "/apps/${APP_NAME}/scripts/process-healthcheck.sh \
